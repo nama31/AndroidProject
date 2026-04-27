@@ -3,6 +3,8 @@ package com.example.mytest.ui.alarm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mytest.domain.challenge.ChallengeProvider
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.model.UserPreferences
 import com.example.mytest.domain.repository.AlarmRepository
@@ -33,10 +35,10 @@ import kotlinx.coroutines.launch
  * the screens land we can split the state into per-screen slices behind the
  * same use cases.
  *
- * Constructor-injectable; Hilt annotations will be added when the DI graph
- * is wired up.
+ * Constructor-injected via Hilt (`@HiltViewModel`).
  */
-class AlarmViewModel(
+@HiltViewModel
+class AlarmViewModel @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val preferencesRepository: PreferencesRepository,
     private val challengeProvider: ChallengeProvider,
@@ -45,8 +47,9 @@ class AlarmViewModel(
     private val submitAnswerUseCase: SubmitAnswerUseCase,
     private val snoozeUseCase: SnoozeUseCase,
     private val ringingController: RingingController,
-    private val now: () -> Long = { System.currentTimeMillis() },
 ) : ViewModel() {
+
+    private val now: () -> Long = { System.currentTimeMillis() }
 
     private val _state = MutableStateFlow(AlarmUiState())
     val state: StateFlow<AlarmUiState> = _state.asStateFlow()

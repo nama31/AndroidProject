@@ -3,14 +3,13 @@ package com.example.mytest.ui.nav
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.mytest.AppGraph
 import com.example.mytest.ui.alarm.AlarmEvent
 import com.example.mytest.ui.alarm.AlarmViewModel
 import com.example.mytest.ui.alarm.dismiss.DismissScreen
@@ -52,7 +51,10 @@ fun AlarmXNavGraph(
     initialAlarmId: Long? = null,
     navController: NavHostController = rememberNavController(),
 ) {
-    val alarmViewModel: AlarmViewModel = viewModel(factory = AppGraph.alarmViewModelFactory)
+    // Hoisted at graph scope so every screen shares the same instance /
+    // event stream. `hiltViewModel()` at this scope uses the activity's
+    // ViewModelStoreOwner (the default `LocalViewModelStoreOwner`).
+    val alarmViewModel: AlarmViewModel = hiltViewModel()
 
     LaunchedEffect(initialAlarmId) {
         if (initialAlarmId != null) {

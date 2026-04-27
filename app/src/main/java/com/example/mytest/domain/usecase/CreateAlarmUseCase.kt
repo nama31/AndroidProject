@@ -4,6 +4,7 @@ import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
 import java.time.DayOfWeek
+import javax.inject.Inject
 
 /**
  * Persists a new alarm using the user's current preferences for fields the
@@ -12,7 +13,7 @@ import java.time.DayOfWeek
  * The caller supplies [id] explicitly — see §4.1 of `alarmx-architecture.md`
  * for why ids are caller-provided (used as the `AlarmManager` request code).
  */
-class CreateAlarmUseCase(
+class CreateAlarmUseCase @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val preferencesRepository: PreferencesRepository,
 ) {

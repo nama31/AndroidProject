@@ -7,6 +7,8 @@ import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.scheduler.AlarmScheduler
 import com.example.mytest.domain.util.AlarmScheduling
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -28,7 +30,8 @@ import kotlinx.coroutines.flow.map
  *
  * Replaces the transitional `LocalAlarmRepository` from the screens PR.
  */
-class DefaultAlarmRepository(
+@Singleton
+class DefaultAlarmRepository @Inject constructor(
     private val alarmDao: AlarmDao,
     private val scheduler: AlarmScheduler,
 ) : AlarmRepository {

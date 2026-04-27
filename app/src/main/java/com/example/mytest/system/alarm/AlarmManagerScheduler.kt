@@ -9,6 +9,9 @@ import android.util.Log
 import com.example.mytest.MainActivity
 import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.scheduler.AlarmScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * `AlarmScheduler` implementation backed by [AlarmManager].
@@ -28,8 +31,9 @@ import com.example.mytest.domain.scheduler.AlarmScheduler
  * a single one-shot trigger using [Alarm.triggerAtEpochMillis]. The
  * `Reschedule` worker handles re-arming on boot.
  */
-class AlarmManagerScheduler(
-    private val context: Context,
+@Singleton
+class AlarmManagerScheduler @Inject constructor(
+    @ApplicationContext private val context: Context,
 ) : AlarmScheduler {
 
     private val alarmManager: AlarmManager =

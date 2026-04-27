@@ -3,6 +3,7 @@ package com.example.mytest.domain.usecase
 import com.example.mytest.domain.challenge.ChallengeProvider
 import com.example.mytest.domain.model.AlarmTrigger
 import com.example.mytest.domain.repository.AlarmRepository
+import javax.inject.Inject
 
 /**
  * Produces an [AlarmTrigger] (alarm + freshly-generated challenge) for the
@@ -13,7 +14,7 @@ import com.example.mytest.domain.repository.AlarmRepository
  * Pure read-side use case: it does NOT mark the alarm as fired or modify the
  * repository. Dismissal is the job of [SubmitAnswerUseCase].
  */
-class TriggerAlarmUseCase(
+class TriggerAlarmUseCase @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val challengeProvider: ChallengeProvider,
 ) {

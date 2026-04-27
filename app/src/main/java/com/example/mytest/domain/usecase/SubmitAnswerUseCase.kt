@@ -2,6 +2,7 @@ package com.example.mytest.domain.usecase
 
 import com.example.mytest.domain.model.ArithmeticTask
 import com.example.mytest.domain.repository.AlarmRepository
+import javax.inject.Inject
 
 /**
  * Compares the user's input against the active challenge's expected answer.
@@ -10,7 +11,7 @@ import com.example.mytest.domain.repository.AlarmRepository
  * other outcomes leave persistent state untouched (the ViewModel decides
  * whether to regenerate the challenge, increment a counter, vibrate, etc.).
  */
-class SubmitAnswerUseCase(
+class SubmitAnswerUseCase @Inject constructor(
     private val alarmRepository: AlarmRepository,
 ) {
     suspend operator fun invoke(
