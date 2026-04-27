@@ -3,6 +3,7 @@ package com.example.mytest.ui.alarm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mytest.domain.challenge.ChallengeProvider
+import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
 import com.example.mytest.domain.ringing.RingingController
@@ -91,6 +92,26 @@ class AlarmViewModel(
 
     fun deleteAlarm(alarmId: Long) {
         launchSafely { alarmRepository.delete(alarmId) }
+    }
+
+    // ------------------------------------------------------------------
+    // Editor screen (create + edit)
+    // ------------------------------------------------------------------
+
+    /**
+     * One-shot read for the editor screen to pre-populate fields when an
+     * existing alarm is being edited. Returns `null` if the alarm was
+     * deleted or doesn't exist.
+     */
+    suspend fun loadAlarm(alarmId: Long): Alarm? = alarmRepository.findById(alarmId)
+
+    /**
+     * Upsert an alarm built on the editor screen. Unlike [createAlarm]
+     * (which fills difficulty/snooze/sound from preferences), this takes a
+     * fully-formed [Alarm] so the editor can expose all fields.
+     */
+    fun saveAlarm(alarm: Alarm) {
+        launchSafely { alarmRepository.save(alarm) }
     }
 
     // ------------------------------------------------------------------

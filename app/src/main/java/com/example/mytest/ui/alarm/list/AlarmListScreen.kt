@@ -34,14 +34,20 @@ import com.example.mytest.ui.theme.AlarmXTheme
 /**
  * §8.5 wireframe — top bar "Alarms", `LazyColumn` of [AxAlarmRow], FAB.
  *
- * The "+" FAB is wired to a quick-add (now + 1 minute) so the dismiss flow
- * can be exercised without a dedicated CreateAlarm screen. Replace the FAB
- * action with navigation to a CreateAlarmScreen once that screen lands.
+ * Interactions:
+ * - FAB "+"            → [onCreate] (opens the editor in create mode).
+ * - Tap on a row       → [onEdit] (opens the editor in edit mode).
+ * - Long-press on row  → test-triggers the dismiss flow. Retained as a dev
+ *   affordance because without a real AlarmManager firing there's no other
+ *   way to exercise the Dismiss UI from a running emulator; harmless in
+ *   production because users don't discover long-press without trying.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmListScreen(
     viewModel: AlarmViewModel,
+    onCreate: () -> Unit,
+    onEdit: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -63,7 +69,7 @@ fun AlarmListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { quickAddAlarm(viewModel) },
+                onClick = onCreate,
                 shape = CircleShape,
                 containerColor = colors.accentBlue,
                 contentColor = colors.surfaceBase,
@@ -84,10 +90,8 @@ fun AlarmListScreen(
             AlarmList(
                 alarms = state.alarms,
                 onToggle = viewModel::toggleAlarm,
-                // No CreateAlarm/Edit screen yet — tapping a row test-triggers
-                // the dismiss flow so the full UX can be exercised. Replace
-                // with navigation to an Edit screen once that lands.
-                onClick = viewModel::onAlarmTriggered,
+                onClick = onEdit,
+                onLongClick = viewModel::onAlarmTriggered,
                 contentPadding = padding,
             )
         }
@@ -99,6 +103,7 @@ private fun AlarmList(
     alarms: List<Alarm>,
     onToggle: (Long, Boolean) -> Unit,
     onClick: (Long) -> Unit,
+    onLongClick: (Long) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val colors = AlarmXTheme.colors
@@ -111,8 +116,8 @@ private fun AlarmList(
                 alarm = alarm,
                 onToggle = { enabled -> onToggle(alarm.id, enabled) },
                 onClick = { onClick(alarm.id) },
+                onLongClick = { onLongClick(alarm.id) },
             )
-            // Hairline separator (§8 design rule).
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,18 +163,4 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(top = 4.dp),
         )
     }
-}
-
-/**
- * Prototype-only. Inserts an alarm that fires in one minute so the Dismiss
- * flow can be exercised. Will be replaced by navigation to a
- * CreateAlarmScreen.
- */
-private fun quickAddAlarm(viewModel: AlarmViewModel) {
-    val now = System.currentTimeMillis()
-    viewModel.createAlarm(
-        id = now,
-        triggerAtEpochMillis = now + 60_000,
-        label = "Quick alarm",
-    )
 }
