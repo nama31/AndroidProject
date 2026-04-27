@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.mytest.AppGraph
+import com.example.mytest.domain.util.AlarmScheduling
 
 /**
  * Background worker that re-arms every enabled alarm after a reboot or app
@@ -20,17 +21,35 @@ class AlarmRescheduleWorker(
 
     override suspend fun doWork(): Result {
         return try {
-            val alarms = AppGraph.alarmRepository.list()
+            val repo = AppGraph.alarmRepository
             val scheduler = AppGraph.alarmScheduler
+            val alarms = repo.list()
             val now = System.currentTimeMillis()
             var armed = 0
+            var advanced = 0
+            var disabled = 0
             for (alarm in alarms) {
                 if (!alarm.enabled) continue
-                if (alarm.triggerAtEpochMillis <= now) continue
-                scheduler.schedule(alarm)
-                armed++
+                if (alarm.triggerAtEpochMillis > now) {
+                    // Still in the future — re-arm as-is.
+                    scheduler.schedule(alarm)
+                    armed++
+                    continue
+                }
+                // Past-due while the device was off.
+                if (alarm.repeatDays.isEmpty()) {
+                    // One-shot that we missed during the downtime — disable
+                    // and leave it to the user to re-arm. Firing late would
+                    // be worse than not firing at all.
+                    repo.setEnabled(alarm.id, enabled = false)
+                    disabled++
+                    continue
+                }
+                val next = AlarmScheduling.advanceRepeating(alarm) ?: continue
+                repo.save(next)
+                advanced++
             }
-            Log.d(TAG, "Rescheduled $armed alarm(s)")
+            Log.d(TAG, "Reschedule: armed=$armed advanced=$advanced disabled=$disabled")
             Result.success()
         } catch (t: Throwable) {
             Log.e(TAG, "Reschedule worker failed", t)

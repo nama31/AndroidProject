@@ -6,6 +6,7 @@ import com.example.mytest.data.db.AlarmMapper.toEntity
 import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.scheduler.AlarmScheduler
+import com.example.mytest.domain.util.AlarmScheduling
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -16,7 +17,11 @@ import kotlinx.coroutines.flow.map
  *
  *   - `save(enabled = true)`  → upsert + `scheduler.schedule(alarm)`
  *   - `save(enabled = false)` → upsert + `scheduler.cancel(alarmId)`
- *   - `dismiss(id)`           → flip `enabled = false` + `scheduler.cancel`
+ *   - `dismiss(id)`:
+ *       - one-shot (`repeatDays.isEmpty()`) → flip `enabled = false` +
+ *         `scheduler.cancel`.
+ *       - repeating → advance `triggerAtEpochMillis` to the next occurrence
+ *         and reschedule; the alarm stays enabled.
  *   - `setEnabled(id, false)` → DB update + `scheduler.cancel`
  *   - `setEnabled(id, true)`  → DB update + `scheduler.schedule`
  *   - `delete(id)`            → row delete + `scheduler.cancel`
@@ -48,6 +53,16 @@ class DefaultAlarmRepository(
     }
 
     override suspend fun dismiss(alarmId: Long) {
+        val existing = alarmDao.findById(alarmId)?.toDomain()
+        if (existing != null && existing.repeatDays.isNotEmpty()) {
+            // Repeating alarm — advance to the next occurrence rather than
+            // turning the alarm off. save() handles the reschedule.
+            val advanced = AlarmScheduling.advanceRepeating(existing)
+            if (advanced != null) {
+                save(advanced)
+                return
+            }
+        }
         alarmDao.setEnabled(alarmId, enabled = false, updatedAt = System.currentTimeMillis())
         scheduler.cancel(alarmId)
     }
