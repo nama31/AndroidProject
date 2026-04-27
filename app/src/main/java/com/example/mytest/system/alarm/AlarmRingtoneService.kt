@@ -37,6 +37,7 @@ class AlarmRingtoneService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentAlarmId: Long = -1L
+    private var currentSoundUri: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -61,6 +62,7 @@ class AlarmRingtoneService : Service() {
             return START_NOT_STICKY
         }
         currentAlarmId = alarmId
+        currentSoundUri = intent.getStringExtra(AlarmIntents.EXTRA_ALARM_SOUND)
 
         startInForeground(alarmId)
         acquireWakeLock()
@@ -119,7 +121,8 @@ class AlarmRingtoneService : Service() {
     // ----------------------------------------------------------------------
 
     private fun startRingtone() {
-        val uri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val uri: Uri = resolveSoundUri(currentSoundUri)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
             ?: return
         try {
@@ -138,6 +141,29 @@ class AlarmRingtoneService : Service() {
             Log.d(TAG, "Ringtone started")
         } catch (t: Throwable) {
             Log.w(TAG, "Failed to start ringtone", t)
+        }
+    }
+
+    /**
+     * Parse the per-alarm sound string into a usable [Uri].
+     *
+     * - `null`, blank, or `"default"` → return `null` so the caller falls
+     *   back to `RingtoneManager.getDefaultUri(TYPE_ALARM)`.
+     * - `"silent"` → return `null` (same default fallback). Silent alarms
+     *   are rejected by the picker on purpose; this branch exists only for
+     *   defensive parsing of data saved before we hardened the picker.
+     * - Anything else → attempt `Uri.parse`; on failure return `null`.
+     */
+    private fun resolveSoundUri(raw: String?): Uri? {
+        if (raw.isNullOrBlank()) return null
+        val normalized = raw.trim()
+        if (normalized.equals("default", ignoreCase = true)) return null
+        if (normalized.equals("silent", ignoreCase = true)) return null
+        return try {
+            Uri.parse(normalized)
+        } catch (t: Throwable) {
+            Log.w(TAG, "Unparseable sound URI: $normalized", t)
+            null
         }
     }
 

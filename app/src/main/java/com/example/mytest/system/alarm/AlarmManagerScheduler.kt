@@ -41,7 +41,7 @@ class AlarmManagerScheduler(
             return
         }
 
-        val operation = operationPendingIntent(alarm.id, mutable = false)
+        val operation = operationPendingIntent(alarm.id, alarm.sound, mutable = false)
         val showIntent = showPendingIntent(alarm.id)
 
         try {
@@ -62,16 +62,21 @@ class AlarmManagerScheduler(
     }
 
     override fun cancel(alarmId: Long) {
-        val operation = operationPendingIntent(alarmId, mutable = false)
+        val operation = operationPendingIntent(alarmId, sound = null, mutable = false)
         alarmManager.cancel(operation)
         operation.cancel()
         Log.d(TAG, "Cancelled alarm id=$alarmId")
     }
 
-    private fun operationPendingIntent(alarmId: Long, mutable: Boolean): PendingIntent {
+    private fun operationPendingIntent(
+        alarmId: Long,
+        sound: String?,
+        mutable: Boolean,
+    ): PendingIntent {
         val intent = Intent(context, AlarmBroadcastReceiver::class.java).apply {
             action = AlarmIntents.ACTION_ALARM_FIRED
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
+            if (sound != null) putExtra(AlarmIntents.EXTRA_ALARM_SOUND, sound)
             // Make the Intent unique per alarm id so PendingIntents don't collide.
             data = android.net.Uri.parse("alarmx://alarm/$alarmId")
         }

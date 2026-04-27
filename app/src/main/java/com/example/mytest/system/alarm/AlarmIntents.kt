@@ -21,6 +21,15 @@ object AlarmIntents {
     /** Long extra: the alarm id the intent applies to. */
     const val EXTRA_ALARM_ID = "com.example.mytest.extra.ALARM_ID"
 
+    /**
+     * String extra: ringtone URI (or `"default"` sentinel) for the firing
+     * alarm. Sourced from [com.example.mytest.domain.model.Alarm.sound] at
+     * schedule time and forwarded through the broadcast to
+     * [AlarmRingtoneService]. Absent/unparseable values fall back to
+     * `RingtoneManager.getDefaultUri(TYPE_ALARM)`.
+     */
+    const val EXTRA_ALARM_SOUND = "com.example.mytest.extra.ALARM_SOUND"
+
     /** Notification channel id used by the foreground ringtone service. */
     const val CHANNEL_ID_ALARM = "alarmx.alarm"
 

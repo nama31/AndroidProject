@@ -47,6 +47,9 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 
         val serviceIntent = Intent(context, AlarmRingtoneService::class.java).apply {
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
+            intent.getStringExtra(AlarmIntents.EXTRA_ALARM_SOUND)?.let { sound ->
+                putExtra(AlarmIntents.EXTRA_ALARM_SOUND, sound)
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
