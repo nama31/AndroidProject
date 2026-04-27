@@ -9,6 +9,8 @@ import com.example.mytest.domain.model.ThemeMode
 import com.example.mytest.domain.model.UserPreferences
 import com.example.mytest.domain.repository.PreferencesRepository
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -26,10 +28,12 @@ import kotlinx.coroutines.flow.map
  * Read errors (`IOException`) are surfaced as empty [Preferences] so callers
  * always observe at least the in-memory defaults rather than crashing.
  */
-class PreferencesRepositoryImpl(
+@Singleton
+class PreferencesRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    private val defaults: UserPreferences = UserPreferences(),
 ) : PreferencesRepository {
+
+    private val defaults: UserPreferences = UserPreferences()
 
     override val preferences: Flow<UserPreferences> = dataStore.data
         .catch { cause ->

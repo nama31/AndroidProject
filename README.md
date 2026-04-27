@@ -74,7 +74,7 @@ The visual language is borrowed from [AppBlock](https://appblock.app/) — stric
 | Scheduling | `AlarmManager.setAlarmClock` (with `setExactAndAllowWhileIdle` fallback) |
 | Foreground audio | `MediaPlayer` + foreground service (`mediaPlayback`) |
 | Build | AGP `9.1.1`, Java 11 source/target, core-library desugaring (`desugar_jdk_libs 2.1.5`) for `java.time` on min-SDK 24 |
-| DI | **Manual service-locator** (`AppGraph`) — Hilt migration is on the roadmap |
+| DI | **Hilt** (`com.google.dagger.hilt.android 2.54`), `hilt-navigation-compose`, `hilt-work` |
 | Min / target SDK | 24 / 36 |
 
 ---
@@ -172,9 +172,12 @@ sequenceDiagram
 
 ```
 app/src/main/java/com/example/mytest/
-├── AlarmXApp.kt                # Application — initialises AppGraph + notification channel
-├── AppGraph.kt                 # Manual service-locator (Hilt placeholder)
-├── MainActivity.kt             # Single Activity, lock-screen takeover, intent routing
+├── AlarmXApp.kt                # Application — @HiltAndroidApp, Configuration.Provider for WorkManager
+├── MainActivity.kt             # Single Activity (@AndroidEntryPoint), lock-screen takeover, intent routing
+├── di/
+│   ├── DataModule.kt           # @Provides: AppDatabase, AlarmDao, DataStore
+│   ├── DomainModule.kt         # @Provides: Random
+│   └── RepositoryModule.kt     # @Binds: repositories, scheduler, ringing controller, challenge provider
 ├── domain/                     # Pure Kotlin — no Android imports
 │   ├── model/                  #   Alarm, UserPreferences, ArithmeticTask, DifficultyLevel
 │   ├── repository/             #   AlarmRepository, PreferencesRepository
@@ -225,10 +228,6 @@ The guide covers, step by step:
 
 ## Roadmap
 
-- [ ] Create / Edit alarm screen (TimePicker, label, day-of-week, difficulty, snooze).
-- [ ] Preferences screen (default difficulty, snooze minutes, max attempts, sound).
-- [ ] Repeat-day re-arming after firing (auto-schedule next occurrence).
-- [ ] Hilt DI graph (`@HiltAndroidApp`, `@HiltWorker`, replace `AppGraph`).
 - [ ] Permission UX (Settings deep-link for `SCHEDULE_EXACT_ALARM` denial, `USE_FULL_SCREEN_INTENT` "Manage" screen on API 34+).
 - [ ] Direct-Boot-aware DB so alarms can re-arm before unlock on `LOCKED_BOOT_COMPLETED`.
 - [ ] Unit tests for `ArithmeticTaskGenerator`, use cases, and `AlarmViewModel`.

@@ -3,6 +3,7 @@ package com.example.mytest.domain.usecase
 import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
+import javax.inject.Inject
 
 /**
  * Pushes an alarm forward by its configured snooze interval.
@@ -15,7 +16,7 @@ import com.example.mytest.domain.repository.PreferencesRepository
  * Persists via [AlarmRepository.save] so the system layer schedules the new
  * trigger time atomically with the data write.
  */
-class SnoozeUseCase(
+class SnoozeUseCase @Inject constructor(
     private val alarmRepository: AlarmRepository,
     private val preferencesRepository: PreferencesRepository,
 ) {

@@ -3,6 +3,8 @@ package com.example.mytest.domain.challenge
 import com.example.mytest.domain.model.ArithmeticOperation
 import com.example.mytest.domain.model.ArithmeticTask
 import com.example.mytest.domain.model.DifficultyLevel
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.random.Random
 
 /**
@@ -26,8 +28,9 @@ import kotlin.random.Random
  * The [random] dependency is injectable so unit tests can pass `Random(seed)`
  * for deterministic output.
  */
-class ArithmeticTaskGenerator(
-    private val random: Random = Random.Default,
+@Singleton
+class ArithmeticTaskGenerator @Inject constructor(
+    private val random: Random,
 ) : ChallengeProvider {
 
     override fun generate(difficulty: DifficultyLevel): ArithmeticTask {

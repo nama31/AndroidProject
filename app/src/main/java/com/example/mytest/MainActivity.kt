@@ -17,9 +17,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mytest.domain.model.ThemeMode
 import com.example.mytest.domain.model.UserPreferences
+import com.example.mytest.domain.repository.PreferencesRepository
 import com.example.mytest.system.alarm.AlarmIntents
 import com.example.mytest.ui.nav.AlarmXNavGraph
 import com.example.mytest.ui.theme.AlarmXTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Single Activity for AlarmX.
@@ -32,7 +35,11 @@ import com.example.mytest.ui.theme.AlarmXTheme
  * The activity opts in to `setShowWhenLocked` / `setTurnScreenOn` so the
  * dismiss UI appears over the keyguard the moment the alarm fires.
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var preferencesRepository: PreferencesRepository
 
     private var initialAlarmId by mutableStateOf<Long?>(null)
 
@@ -47,7 +54,7 @@ class MainActivity : ComponentActivity() {
         initialAlarmId = readAlarmIdFromIntent(intent)
 
         setContent {
-            val prefs by AppGraph.preferencesRepository.preferences
+            val prefs by preferencesRepository.preferences
                 .collectAsStateWithLifecycle(initialValue = UserPreferences())
             val systemDark = isSystemInDarkTheme()
             val darkTheme = when (prefs.themeMode) {

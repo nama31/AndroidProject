@@ -214,11 +214,13 @@ Then **File → Sync Project with Gradle Files**.
 
 ---
 
-### E. "Hilt / Dagger annotation not found"
+### E. "Hilt / Dagger annotation not found" or "Cannot resolve symbol HiltAndroidApp"
 
-**Cause of confusion:** older versions of this README mentioned Hilt. **AlarmX does not currently use Hilt** — it uses a manual service-locator (`AppGraph`) as a transitional placeholder. If a search-engine result tells you to add `@HiltAndroidApp`, ignore it for now.
+AlarmX uses **Hilt** (`com.google.dagger.hilt.android 2.54`). If Android Studio highlights `@HiltAndroidApp`, `@HiltViewModel`, or `@AndroidEntryPoint` as unresolved after a fresh clone:
 
-The Hilt migration is on the [roadmap](../README.md#roadmap).
+1. Sync Gradle — Hilt's annotation processor runs via KSP, and symbols aren't generated until the first successful sync.
+2. If it still fails: **Build → Clean Project → Rebuild Project**.
+3. If KSP is complaining: from the project root run `./gradlew :app:kspDebugKotlin --info` and read the actual error. Most Hilt issues come from a missing binding — the error message names the exact interface that has no `@Binds`/`@Provides` provider.
 
 ---
 
