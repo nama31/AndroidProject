@@ -62,7 +62,7 @@ class AlarmRingtoneService : Service() {
             return START_NOT_STICKY
         }
         currentAlarmId = alarmId
-        currentSoundUri = intent.getStringExtra(AlarmIntents.EXTRA_ALARM_SOUND)
+        currentSoundUri = intent?.getStringExtra(AlarmIntents.EXTRA_ALARM_SOUND)
 
         startInForeground(alarmId)
         acquireWakeLock()
