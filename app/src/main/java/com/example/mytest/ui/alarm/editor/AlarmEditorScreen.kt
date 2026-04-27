@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mytest.domain.model.Alarm
 import com.example.mytest.domain.model.DifficultyLevel
+import com.example.mytest.domain.util.AlarmScheduling
 import com.example.mytest.ui.alarm.AlarmViewModel
 import com.example.mytest.ui.common.AxChip
 import com.example.mytest.ui.common.AxPrimaryButton
@@ -43,8 +44,6 @@ import com.example.mytest.ui.common.AxSegmented
 import com.example.mytest.ui.common.AxToggle
 import com.example.mytest.ui.theme.AlarmXTheme
 import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -413,28 +412,11 @@ private fun buildAlarm(
     sound: String,
     enabled: Boolean,
 ): Alarm {
-    val zone = ZoneId.systemDefault()
-    val now = LocalDateTime.now(zone)
-    val today = now.toLocalDate()
-    val targetTime = LocalTime.of(hour, minute)
-
-    val nextDate: LocalDate = if (repeatDays.isEmpty()) {
-        if (targetTime.isAfter(now.toLocalTime())) today else today.plusDays(1)
-    } else {
-        val todayIsEligible = today.dayOfWeek in repeatDays && targetTime.isAfter(now.toLocalTime())
-        if (todayIsEligible) {
-            today
-        } else {
-            // Earliest future day in repeatDays, searching forward from tomorrow.
-            (1..7).asSequence()
-                .map { today.plusDays(it.toLong()) }
-                .first { it.dayOfWeek in repeatDays }
-        }
-    }
-    val triggerAtEpochMillis = LocalDateTime.of(nextDate, targetTime)
-        .atZone(zone)
-        .toInstant()
-        .toEpochMilli()
+    val triggerAtEpochMillis = AlarmScheduling.nextTriggerEpochMillis(
+        hour = hour,
+        minute = minute,
+        repeatDays = repeatDays,
+    )
 
     val id = existingId ?: System.currentTimeMillis()
 
