@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mytest.domain.challenge.ChallengeProvider
 import com.example.mytest.domain.model.Alarm
+import com.example.mytest.domain.model.UserPreferences
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
 import com.example.mytest.domain.ringing.RingingController
@@ -112,6 +113,18 @@ class AlarmViewModel(
      */
     fun saveAlarm(alarm: Alarm) {
         launchSafely { alarmRepository.save(alarm) }
+    }
+
+    // ------------------------------------------------------------------
+    // Preferences screen
+    // ------------------------------------------------------------------
+
+    /**
+     * Atomically transform and persist the current [UserPreferences]. The
+     * transform runs on the DataStore writer thread.
+     */
+    fun updatePreferences(transform: (UserPreferences) -> UserPreferences) {
+        launchSafely { preferencesRepository.update(transform) }
     }
 
     // ------------------------------------------------------------------

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,6 +49,7 @@ fun AlarmListScreen(
     viewModel: AlarmViewModel,
     onCreate: () -> Unit,
     onEdit: (Long) -> Unit,
+    onOpenPreferences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -60,6 +62,16 @@ fun AlarmListScreen(
             TopAppBar(
                 title = {
                     Text(text = "Alarms", style = AlarmXTheme.typography.titleLg)
+                },
+                actions = {
+                    IconButton(onClick = onOpenPreferences) {
+                        // Plain glyph — avoids pulling material-icons-extended.
+                        Text(
+                            text = "⚙",
+                            style = AlarmXTheme.typography.titleLg,
+                            color = colors.textPrimary,
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colors.surfaceBase,

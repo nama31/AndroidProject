@@ -16,6 +16,7 @@ import com.example.mytest.ui.alarm.AlarmViewModel
 import com.example.mytest.ui.alarm.dismiss.DismissScreen
 import com.example.mytest.ui.alarm.editor.AlarmEditorScreen
 import com.example.mytest.ui.alarm.list.AlarmListScreen
+import com.example.mytest.ui.alarm.preferences.PreferencesScreen
 
 /**
  * Top-level navigation graph.
@@ -38,6 +39,7 @@ object AlarmXRoutes {
     const val EDITOR_CREATE = "editor"
     const val EDITOR_EDIT = "editor/{alarmId}"
     const val DISMISS = "dismiss/{alarmId}"
+    const val PREFERENCES = "preferences"
     const val ALARM_ID_ARG = "alarmId"
 
     fun editor(alarmId: Long) = "editor/$alarmId"
@@ -86,6 +88,13 @@ fun AlarmXNavGraph(
                 viewModel = alarmViewModel,
                 onCreate = { navController.navigate(AlarmXRoutes.EDITOR_CREATE) },
                 onEdit = { id -> navController.navigate(AlarmXRoutes.editor(id)) },
+                onOpenPreferences = { navController.navigate(AlarmXRoutes.PREFERENCES) },
+            )
+        }
+        composable(AlarmXRoutes.PREFERENCES) {
+            PreferencesScreen(
+                viewModel = alarmViewModel,
+                onClose = { navController.popBackStack() },
             )
         }
         composable(AlarmXRoutes.EDITOR_CREATE) {

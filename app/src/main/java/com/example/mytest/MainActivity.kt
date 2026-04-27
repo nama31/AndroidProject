@@ -9,10 +9,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.mytest.domain.model.ThemeMode
+import com.example.mytest.domain.model.UserPreferences
 import com.example.mytest.system.alarm.AlarmIntents
 import com.example.mytest.ui.nav.AlarmXNavGraph
 import com.example.mytest.ui.theme.AlarmXTheme
@@ -43,7 +47,15 @@ class MainActivity : ComponentActivity() {
         initialAlarmId = readAlarmIdFromIntent(intent)
 
         setContent {
-            AlarmXTheme {
+            val prefs by AppGraph.preferencesRepository.preferences
+                .collectAsStateWithLifecycle(initialValue = UserPreferences())
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (prefs.themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> systemDark
+            }
+            AlarmXTheme(darkTheme = darkTheme) {
                 AlarmXNavGraph(initialAlarmId = initialAlarmId)
             }
         }
