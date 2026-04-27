@@ -11,21 +11,28 @@ import androidx.room.Room
 import com.example.mytest.data.db.AppDatabase
 import com.example.mytest.data.prefs.PreferencesKeys
 import com.example.mytest.data.prefs.PreferencesRepositoryImpl
-import com.example.mytest.data.repository.LocalAlarmRepository
+import com.example.mytest.data.repository.DefaultAlarmRepository
 import com.example.mytest.domain.challenge.ArithmeticTaskGenerator
 import com.example.mytest.domain.challenge.ChallengeProvider
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
+import com.example.mytest.domain.ringing.RingingController
+import com.example.mytest.domain.scheduler.AlarmScheduler
 import com.example.mytest.domain.usecase.CreateAlarmUseCase
 import com.example.mytest.domain.usecase.SnoozeUseCase
 import com.example.mytest.domain.usecase.SubmitAnswerUseCase
 import com.example.mytest.domain.usecase.TriggerAlarmUseCase
+import com.example.mytest.system.alarm.AlarmManagerScheduler
+import com.example.mytest.system.alarm.AndroidRingingController
 import com.example.mytest.ui.alarm.AlarmViewModel
 
 /**
  * Manual service-locator used as a stand-in for Hilt until the DI graph
  * lands. Every singleton is created lazily on first access; nothing is
  * touched until the first [AlarmViewModel] is requested.
+ *
+ * Also referenced from [com.example.mytest.system.boot.AlarmRescheduleWorker]
+ * (which can't take constructor arguments without a custom WorkerFactory).
  */
 object AppGraph {
 
@@ -47,8 +54,12 @@ object AppGraph {
         ).build()
     }
 
+    val alarmScheduler: AlarmScheduler by lazy {
+        AlarmManagerScheduler(application)
+    }
+
     val alarmRepository: AlarmRepository by lazy {
-        LocalAlarmRepository(database.alarmDao())
+        DefaultAlarmRepository(database.alarmDao(), alarmScheduler)
     }
 
     val preferencesRepository: PreferencesRepository by lazy {
@@ -57,6 +68,10 @@ object AppGraph {
 
     val challengeProvider: ChallengeProvider by lazy {
         ArithmeticTaskGenerator()
+    }
+
+    val ringingController: RingingController by lazy {
+        AndroidRingingController(application)
     }
 
     private val createAlarmUseCase by lazy {
@@ -83,6 +98,7 @@ object AppGraph {
                 triggerAlarmUseCase = triggerAlarmUseCase,
                 submitAnswerUseCase = submitAnswerUseCase,
                 snoozeUseCase = snoozeUseCase,
+                ringingController = ringingController,
             ) as T
         }
     }

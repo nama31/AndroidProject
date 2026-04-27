@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mytest.domain.challenge.ChallengeProvider
 import com.example.mytest.domain.repository.AlarmRepository
 import com.example.mytest.domain.repository.PreferencesRepository
+import com.example.mytest.domain.ringing.RingingController
 import com.example.mytest.domain.usecase.CreateAlarmUseCase
 import com.example.mytest.domain.usecase.SnoozeUseCase
 import com.example.mytest.domain.usecase.SubmitAnswerResult
@@ -41,6 +42,7 @@ class AlarmViewModel(
     private val triggerAlarmUseCase: TriggerAlarmUseCase,
     private val submitAnswerUseCase: SubmitAnswerUseCase,
     private val snoozeUseCase: SnoozeUseCase,
+    private val ringingController: RingingController,
     private val now: () -> Long = { System.currentTimeMillis() },
 ) : ViewModel() {
 
@@ -120,6 +122,7 @@ class AlarmViewModel(
         launchSafely {
             when (submitAnswerUseCase(s.activeAlarmId, s.activeChallenge, answer)) {
                 SubmitAnswerResult.Correct -> {
+                    ringingController.stop()
                     _state.update {
                         it.copy(
                             activeAlarmId = null,
@@ -165,6 +168,7 @@ class AlarmViewModel(
                 _events.emit(AlarmEvent.ShowError("Snooze is disabled or alarm is gone"))
                 return@launchSafely
             }
+            ringingController.stop()
             _state.update {
                 it.copy(
                     activeAlarmId = null,
