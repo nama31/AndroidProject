@@ -23,10 +23,12 @@ import com.example.mytest.ui.alarm.list.AlarmListScreen
  * - `list` — [AlarmListScreen]
  * - `dismiss/{alarmId}` — [DismissScreen]
  *
- * The [AlarmViewModel] is stored at the activity scope (via [viewModel]
- * with no `viewModelStoreOwner` override) so both screens share the same
- * state and event stream. [AlarmEvent.NavigateToDismiss] /
- * [AlarmEvent.NavigateBackToList] drive the controller.
+ * The [AlarmViewModel] is hoisted at the activity scope (single instance
+ * for the whole graph) so both screens share state and event stream.
+ *
+ * If [initialAlarmId] is non-null (set when MainActivity is launched via the
+ * full-screen alarm intent), we navigate to the dismiss screen for that
+ * alarm before the list is ever shown.
  */
 object AlarmXRoutes {
     const val LIST = "list"
@@ -39,15 +41,24 @@ object AlarmXRoutes {
 @Composable
 fun AlarmXNavGraph(
     modifier: Modifier = Modifier,
+    initialAlarmId: Long? = null,
     navController: NavHostController = rememberNavController(),
 ) {
     val alarmViewModel: AlarmViewModel = viewModel(factory = AppGraph.alarmViewModelFactory)
+
+    LaunchedEffect(initialAlarmId) {
+        if (initialAlarmId != null) {
+            navController.navigate(AlarmXRoutes.dismiss(initialAlarmId))
+        }
+    }
 
     LaunchedEffect(navController) {
         alarmViewModel.events.collect { event ->
             when (event) {
                 is AlarmEvent.NavigateToDismiss -> {
-                    if (navController.currentDestination?.route != AlarmXRoutes.DISMISS) {
+                    val alreadyOnDismiss =
+                        navController.currentDestination?.route == AlarmXRoutes.DISMISS
+                    if (!alreadyOnDismiss) {
                         navController.navigate(AlarmXRoutes.dismiss(event.alarmId))
                     }
                 }
