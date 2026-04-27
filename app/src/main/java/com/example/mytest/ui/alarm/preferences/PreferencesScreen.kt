@@ -1,5 +1,12 @@
 package com.example.mytest.ui.alarm.preferences
 
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
+import android.os.Parcelable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mytest.domain.model.DifficultyLevel
 import com.example.mytest.domain.model.ThemeMode
 import com.example.mytest.ui.alarm.AlarmViewModel
+import com.example.mytest.ui.common.AxSecondaryButton
 import com.example.mytest.ui.common.AxSegmented
 import com.example.mytest.ui.common.AxToggle
 import com.example.mytest.ui.theme.AlarmXTheme
@@ -54,6 +63,28 @@ fun PreferencesScreen(
     val prefs = state.preferences
     val colors = AlarmXTheme.colors
     val typography = AlarmXTheme.typography
+    val context = LocalContext.current
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val data = result.data ?: return@rememberLauncherForActivityResult
+        val picked: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            data.getParcelableExtra(
+                RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                Uri::class.java,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            data.getParcelableExtra<Parcelable>(
+                RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+            ) as? Uri
+        }
+        // System picker returns null when the user chooses "Default" if we
+        // asked it to — we didn't, but be defensive.
+        val newSound = picked?.toString() ?: "default"
+        viewModel.updatePreferences { it.copy(sound = newSound) }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -161,12 +192,51 @@ fun PreferencesScreen(
                 )
             }
 
-            Section(title = "Sound", hint = "Ringtone picker coming in a future update.") {
-                Text(
-                    text = prefs.sound.ifBlank { "default" },
-                    style = typography.bodyMd,
-                    color = colors.textSecondary,
-                )
+            Section(title = "Sound") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = ringtoneTitle(context, prefs.sound),
+                            style = typography.bodyMd,
+                            color = colors.textPrimary,
+                        )
+                        Text(
+                            text = "Used for newly-scheduled alarms.",
+                            style = typography.labelSm,
+                            color = colors.textSecondary,
+                        )
+                    }
+                    AxSecondaryButton(
+                        text = "Change",
+                        onClick = {
+                            val current = parseSoundUri(prefs.sound)
+                            val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                putExtra(
+                                    RingtoneManager.EXTRA_RINGTONE_TYPE,
+                                    RingtoneManager.TYPE_ALARM,
+                                )
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                // Silent alarms are an anti-pattern — don't expose.
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Alarm sound")
+                                putExtra(
+                                    RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
+                                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+                                )
+                                if (current != null) {
+                                    putExtra(
+                                        RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                                        current,
+                                    )
+                                }
+                            }
+                            ringtonePickerLauncher.launch(intent)
+                        },
+                    )
+                }
             }
 
             // Hairline at the bottom for visual closure.
@@ -231,3 +301,32 @@ private fun ToggleRow(
 
 private val SnoozeChoices = listOf(1, 5, 10, 15)
 private val MaxSnoozeChoices = listOf(1, 3, 5, 10)
+
+/**
+ * Parse a stored sound string into a [Uri]. Returns `null` for the
+ * `"default"` sentinel and for blank/unparseable values — the ringtone
+ * service treats `null` as "system default alarm".
+ */
+private fun parseSoundUri(raw: String): Uri? {
+    if (raw.isBlank()) return null
+    if (raw.equals("default", ignoreCase = true)) return null
+    return try {
+        Uri.parse(raw)
+    } catch (t: Throwable) {
+        null
+    }
+}
+
+/**
+ * Human-readable title for the selected ringtone. Falls back to
+ * "System default" for the sentinel / unresolvable URIs.
+ */
+private fun ringtoneTitle(context: android.content.Context, raw: String): String {
+    val uri = parseSoundUri(raw) ?: return "System default"
+    return try {
+        val ringtone = RingtoneManager.getRingtone(context, uri) ?: return "System default"
+        ringtone.getTitle(context) ?: "System default"
+    } catch (t: Throwable) {
+        "System default"
+    }
+}
