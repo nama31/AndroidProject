@@ -1,6 +1,7 @@
 package com.example.mytest.ui.common
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,12 +34,14 @@ import java.time.format.DateTimeFormatter
  *
  * Hairline separators are drawn by the parent (the row itself is flat).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AxAlarmRow(
     alarm: Alarm,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
 ) {
     val colors = AlarmXTheme.colors
     val typography = AlarmXTheme.typography
@@ -46,7 +49,10 @@ fun AxAlarmRow(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

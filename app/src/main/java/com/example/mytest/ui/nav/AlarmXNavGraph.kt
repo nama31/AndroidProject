@@ -14,6 +14,7 @@ import com.example.mytest.AppGraph
 import com.example.mytest.ui.alarm.AlarmEvent
 import com.example.mytest.ui.alarm.AlarmViewModel
 import com.example.mytest.ui.alarm.dismiss.DismissScreen
+import com.example.mytest.ui.alarm.editor.AlarmEditorScreen
 import com.example.mytest.ui.alarm.list.AlarmListScreen
 
 /**
@@ -21,10 +22,12 @@ import com.example.mytest.ui.alarm.list.AlarmListScreen
  *
  * Routes:
  * - `list` — [AlarmListScreen]
+ * - `editor` — [AlarmEditorScreen] in create mode
+ * - `editor/{alarmId}` — [AlarmEditorScreen] in edit mode
  * - `dismiss/{alarmId}` — [DismissScreen]
  *
  * The [AlarmViewModel] is hoisted at the activity scope (single instance
- * for the whole graph) so both screens share state and event stream.
+ * for the whole graph) so all screens share state and event stream.
  *
  * If [initialAlarmId] is non-null (set when MainActivity is launched via the
  * full-screen alarm intent), we navigate to the dismiss screen for that
@@ -32,9 +35,12 @@ import com.example.mytest.ui.alarm.list.AlarmListScreen
  */
 object AlarmXRoutes {
     const val LIST = "list"
+    const val EDITOR_CREATE = "editor"
+    const val EDITOR_EDIT = "editor/{alarmId}"
     const val DISMISS = "dismiss/{alarmId}"
     const val ALARM_ID_ARG = "alarmId"
 
+    fun editor(alarmId: Long) = "editor/$alarmId"
     fun dismiss(alarmId: Long) = "dismiss/$alarmId"
 }
 
@@ -76,7 +82,31 @@ fun AlarmXNavGraph(
         modifier = modifier,
     ) {
         composable(AlarmXRoutes.LIST) {
-            AlarmListScreen(viewModel = alarmViewModel)
+            AlarmListScreen(
+                viewModel = alarmViewModel,
+                onCreate = { navController.navigate(AlarmXRoutes.EDITOR_CREATE) },
+                onEdit = { id -> navController.navigate(AlarmXRoutes.editor(id)) },
+            )
+        }
+        composable(AlarmXRoutes.EDITOR_CREATE) {
+            AlarmEditorScreen(
+                viewModel = alarmViewModel,
+                alarmId = null,
+                onClose = { navController.popBackStack() },
+            )
+        }
+        composable(
+            route = AlarmXRoutes.EDITOR_EDIT,
+            arguments = listOf(
+                navArgument(AlarmXRoutes.ALARM_ID_ARG) { type = NavType.LongType },
+            ),
+        ) { entry ->
+            val alarmId = entry.arguments?.getLong(AlarmXRoutes.ALARM_ID_ARG)
+            AlarmEditorScreen(
+                viewModel = alarmViewModel,
+                alarmId = alarmId,
+                onClose = { navController.popBackStack() },
+            )
         }
         composable(
             route = AlarmXRoutes.DISMISS,
